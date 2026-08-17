@@ -2,6 +2,7 @@ html {
   scroll-behavior: smooth; /* ページ内リンククリック時に滑らかにスクロール */
 }
 
+/* 基本設定（PC） */
 body {
   font-family: sans-serif;
   max-width: 800px;
@@ -10,6 +11,24 @@ body {
   line-height: 1.6;
   background-color: #f9f9f9;
   color: #333;
+}
+
+.md-body {
+  font-size: 18px;
+  width: 100%;
+}
+
+
+/* スマホ用 */
+@media (max-width: 768px) {
+  body {
+    padding: 10px;
+  }
+
+  .md-body {
+    font-size: 16px;
+    width: 100%;
+  }
 }
 
 table {
