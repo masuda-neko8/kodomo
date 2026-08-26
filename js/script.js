@@ -106,7 +106,7 @@ async function loadMarkdownFiles() {
       const tocDateHtml = fileDate ? `<span class="toc-date">${fileDate}</span>` : '';
       
       tocItem.innerHTML = `<a href="#${sectionId}">
-        <span class="toc-filename">${fileName}</span>
+        <span class="toc-filename">${baseName}</span>
         ${tocDateHtml}
       </a>`;
       
@@ -120,7 +120,7 @@ async function loadMarkdownFiles() {
       tocContainer.style.display = 'none';
     } else {
       tocContainer.style.display = 'block';
-      tocContainer.innerHTML = '<h2>目次</h2>';
+      tocContainer.innerHTML = '<h2>メニュー</h2>';
       tocContainer.appendChild(tocList);
     }
 
