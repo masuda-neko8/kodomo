@@ -52,9 +52,10 @@ async function initApp() {
         e.preventDefault();
         await loadAndDisplayMarkdown(fileName, baseName, fileDate, cacheBuster);
         
-        // スマホなどでクリック後に内容へスクロールさせたい場合は有効化
-        // container.scrollIntoView({ behavior: 'smooth' });
+        // 追加：読み込んだ記事エリアの先頭までスムーズにスクロールする
+        container.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
+
 
       tocItem.appendChild(tocLink);
       tocList.appendChild(tocItem);
