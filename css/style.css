@@ -1,3 +1,8 @@
+背景を
+page_bg.jpg
+に変更するには？
+
+【style.css】
 html {
   scroll-behavior: smooth; /* ページ内リンククリック時に滑らかにスクロール */
 }
@@ -93,6 +98,7 @@ td {
 }
 
 h1 {
+  text-align: center;
   border-bottom: 2px solid #0056b3;
   padding-bottom: 10px;
   color: #0056b3;
@@ -256,6 +262,10 @@ h1 a:hover {
 }
 
 body {
-    background: pink !important;
+  background-image: url('../page_bg.jpg');
+  background-repeat: repeat;    /* 画像を縦横にタイル状に繰り返して配置する */
+  background-size: auto;        /* 画像の元のサイズのまま表示する */
+  background-position: top left;/* 左上を起点にタイル状に並べる */
+  background-attachment: scroll;/* スクロールに合わせて背景も一緒に動かす（fixedでも可） */
 }
 
