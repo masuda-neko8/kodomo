@@ -142,8 +142,43 @@ async function loadAndDisplayMarkdown(fileName, baseName, fileDate, cacheBuster)
 }
 
 // ページ読み込み完了時に実行
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   setupSelfLink();
-  initApp();
+  
+  // 1. まずメニューとアプリの初期化を行う（メニューリストを表示するため）
+  await initApp();
+
+  // 2. URLのクエリパラメータ（例: ?page=④.開催日一覧.md）をチェックする
+  const urlParams = new URLSearchParams(window.location.search);
+  const targetPage = urlParams.get('page');
+
+  if (targetPage) {
+    // CSVから読み込んだリストの中から、該当するファイル名・基本名・日付を探して自動表示する
+    const cacheBuster = `?t=${new Date().getTime()}`;
+    try {
+      const response = await fetch('md_menu.csv' + cacheBuster);
+      const csvText = await response.text();
+      const lines = csvText.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
+
+      for (const line of lines) {
+        const cols = line.split(',').map(col => col.trim());
+        const fileName = cols[0];
+        const fileDate = cols[1] || '';
+
+        if (fileName === targetPage) {
+          const baseName = fileName.substring(0, fileName.lastIndexOf('.'));
+          // 該当ページを自動読み込み
+          await loadAndDisplayMarkdown(fileName, baseName, fileDate, cacheBuster);
+          
+          // 自動的にその記事の位置までスクロール
+          const container = document.getElementById('app');
+          container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          break;
+        }
+      }
+    } catch (e) {
+      console.error('直接指定されたページの読み込みに失敗しました', e);
+    }
+  }
 });
 

@@ -1,8 +1,3 @@
-背景を
-page_bg.jpg
-に変更するには？
-
-【style.css】
 html {
   scroll-behavior: smooth; /* ページ内リンククリック時に滑らかにスクロール */
 }
@@ -14,15 +9,20 @@ body {
   margin: 0 auto;
   padding: 20px;
   line-height: 1.6;
-  background-color: #f9f9f9;
   color: #333;
+  /* --- 背景画像を適用する設定 --- */
+  background-color: #f9f9f9;     /* 画像が読み込まれない時の予備の色 */
+  background-image: url('../page_bg.jpg'); /* 背景画像の指定（必要に応じてパスを調整してください） */
+  background-repeat: repeat;     /* 画像を縦横にタイル状に繰り返して配置する */
+  background-size: auto;         /* 画像の元のサイズのまま表示する */
+  background-position: top left; /* 左上を起点にタイル状に並べる */
+  background-attachment: scroll; /* スクロールに合わせて背景も一緒に動かす */
 }
 
 .md-body {
   font-size: 18px;
   width: 100%;
 }
-
 
 /* スマホ用 */
 @media (max-width: 768px) {
@@ -50,6 +50,18 @@ td {
     border: 1px solid #ccc;
     padding: 8px;
 }
+
+/* --- 【追加】テーブルの行を1行おきに背景色を変える（シマシマ模様） --- */
+/* tbody内の偶数番目の行(tr)の背景色を変える場合 */
+tbody tr:nth-child(even) {
+    background-color: #f2f5f8; /* お好みの薄い色（例：ごく薄いブルーグレー） */
+}
+
+/* もし tbodyタグ を使わずに直接 <tr> を書いている場合はこちらが反応します */
+tr:nth-child(even) {
+    background-color: #f2f5f8;
+}
+/* ----------------------------------------------------------------- */
 
 /* --- 見出し共通設定 --- */
 .md-content h1, 
@@ -235,7 +247,7 @@ h1 a:hover {
 /* --- 「戻る」ボタンのスタイル --- */
 .back-to-top-container {
   display: flex;
-  justify-content: center; /* 【変更】flex-end から center に変更して中央揃えにする */
+  justify-content: center; /* 中央揃えにする */
   margin-top: 25px;
   padding-top: 15px;
   border-top: 1px dashed #e0e0e0; /* 本文との区切り線 */
@@ -243,7 +255,7 @@ h1 a:hover {
 
 .btn-back-to-top {
   display: inline-block;
-  padding: 6px 20px; /* 横の余白を少し広げるとバランスが良くなります */
+  padding: 6px 20px; 
   background-color: #f0f4f8;
   color: #0056b3;
   text-decoration: none;
@@ -259,13 +271,5 @@ h1 a:hover {
   color: #ffffff;
   border-color: #0056b3;
   text-decoration: none;
-}
-
-body {
-  background-image: url('../page_bg.jpg');
-  background-repeat: repeat;    /* 画像を縦横にタイル状に繰り返して配置する */
-  background-size: auto;        /* 画像の元のサイズのまま表示する */
-  background-position: top left;/* 左上を起点にタイル状に並べる */
-  background-attachment: scroll;/* スクロールに合わせて背景も一緒に動かす（fixedでも可） */
 }
 
