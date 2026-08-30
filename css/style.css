@@ -273,3 +273,12 @@ h1 a:hover {
   text-decoration: none;
 }
 
+.box-container {
+  background-color: #ffffff;         /* 枠の中の背景色（白など） */
+  border: 1px solid #d0d7de;         /* 枠線の太さ・種類・色 */
+  border-radius: 12px;               /* 角を丸くする大きさ（数字が大きいほど丸くなる） */
+  padding: 20px 25px;                /* 枠の中の余白（文字が枠線にピタッとくっつかないようにする） */
+  margin: 20px 0;                    /* 前後の要素との隙間 */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* お好みで立体感を出す影（不要なら削除可） */
+}
+
