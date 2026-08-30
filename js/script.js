@@ -7,6 +7,18 @@ function setupSelfLink() {
   }
 }
 
+// リロードするたびにランダムでトップ画像を設定する関数
+function setRandomImage() {
+  const imgElement = document.getElementById('top-image');
+  if (!imgElement) return;
+
+  // 1〜5 のランダムな整数を生成する
+  const imageNumber = Math.floor(Math.random() * 5) + 1;
+
+  // 画像のパスをランダムに決定した番号に変更する
+  imgElement.src = `top_img${imageNumber}.jpg`;
+}
+
 // メニューとアプリの初期化
 async function initApp() {
   const container = document.getElementById('app');
@@ -147,6 +159,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // 1. まずメニューとアプリの初期化を行う（メニューリストを表示するため）
   await initApp();
+
+  // ▼ ページが読み込まれるたびにランダム画像を設定
+  setRandomImage();
 
   // 2. URLのクエリパラメータ（例: ?page=④.開催日一覧.md）をチェックする
   const urlParams = new URLSearchParams(window.location.search);
