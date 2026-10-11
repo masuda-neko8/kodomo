@@ -1,3 +1,40 @@
+// 日付を yyyy/mm/dd 形式にフォーマットし、2週間以内なら赤字の「New」を付ける補助関数
+function formatDateWithNew(dateString) {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
+
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  const formattedDate = `${yyyy}/${mm}/${dd}`;
+
+  // 14日以内（2週間以内）か判定
+  const now = new Date();
+  const diffTime = now - date;
+  const diffDays = diffTime / (1000 * 60 * 60 * 24);
+  const isNew = diffDays >= 0 && diffDays <= 14;
+
+  if (isNew) {
+    return `<span style="color: red; font-weight: bold; margin-right: 5px;">New</span>${formattedDate}`;
+  }
+  return formattedDate;
+}
+
+// 各ファイルの最終更新日時（Last-Modified）を取得する補助関数
+async function fetchFileDate(fileName, cacheBuster) {
+  try {
+    const res = await fetch(`${fileName}${cacheBuster}`, { method: 'HEAD' });
+    const lastModified = res.headers.get('Last-Modified');
+    if (lastModified) {
+      return new Date(lastModified);
+    }
+  } catch (e) {
+    console.error(`${fileName} の日付取得に失敗しました`, e);
+  }
+  return null;
+}
+
 // 自分自身のHTMLファイル名（またはパス）を動的に設定する関数
 function setupSelfLink() {
   const siteTitleLink = document.getElementById('site-title');
@@ -41,8 +78,7 @@ async function initApp() {
 
     for (const line of lines) {
       const cols = line.split(',').map(col => col.trim());
-      const fileName = cols[0];
-      const fileDate = cols[1] || '';
+      const fileName = cols[0]; // fileNameのみ取得（fileDateは読み込まない）
 
       if (fileName === 'ファイル名' || !fileName.endsWith('.md')) {
         continue;
@@ -51,9 +87,13 @@ async function initApp() {
       hasItems = true;
       const baseName = fileName.substring(0, fileName.lastIndexOf('.'));
 
+      // 実際のファイル自体の更新日時を取得
+      const fileDateObj = await fetchFileDate(fileName, cacheBuster);
+      const dateDisplayStr = formatDateWithNew(fileDateObj);
+
       // メニュー項目の作成
       const tocItem = document.createElement('li');
-      const tocDateHtml = fileDate ? `<span class="toc-date">${fileDate}</span>` : '';
+      const tocDateHtml = dateDisplayStr ? `<span class="toc-date">${dateDisplayStr}</span>` : '';
       
       const tocLink = document.createElement('a');
       tocLink.href = '#';
@@ -62,12 +102,12 @@ async function initApp() {
       // リンクをクリックしたときの処理
       tocLink.addEventListener('click', async (e) => {
         e.preventDefault();
-        await loadAndDisplayMarkdown(fileName, baseName, fileDate, cacheBuster);
+        const rawDateStr = fileDateObj ? fileDateObj.toISOString() : '';
+        await loadAndDisplayMarkdown(fileName, baseName, rawDateStr, cacheBuster);
         
         // 追加：読み込んだ記事エリアの先頭までスムーズにスクロールする
         container.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
-
 
       tocItem.appendChild(tocLink);
       tocList.appendChild(tocItem);
@@ -79,7 +119,7 @@ async function initApp() {
       tocContainer.style.display = 'block';
       tocContainer.innerHTML = '<h2>メニュー</h2>';
       tocContainer.appendChild(tocList);
-      container.innerHTML = '<p class="placeholder-text">上のメニューから項目を選択してください。</p>';
+      container.innerHTML = '<p class="placeholder-text">上のメニューから項目を選択してください。なお「New」は14日以内の更新。</p>';
     }
 
   } catch (error) {
@@ -117,7 +157,19 @@ async function loadAndDisplayMarkdown(fileName, baseName, fileDate, cacheBuster)
       imageSrc = fallbackImgPath;
     }
 
-    const metaDateHtml = fileDate ? `<span class="md-meta-date">更新日時: ${fileDate}</span>` : '';
+    // 記事内の日付表示のフォーマット（必要に応じてyyyy/mm/dd形式へ）
+    let formattedMetaDate = '';
+    if (fileDate) {
+      const d = new Date(fileDate);
+      if (!isNaN(d.getTime())) {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        formattedMetaDate = `${yyyy}/${mm}/${dd}`;
+      }
+    }
+
+    const metaDateHtml = formattedMetaDate ? `<span class="md-meta-date">更新日時: ${formattedMetaDate}</span>` : '';
 
     const article = document.createElement('article');
     article.className = 'md-content';
@@ -141,7 +193,7 @@ async function loadAndDisplayMarkdown(fileName, baseName, fileDate, cacheBuster)
     const backBtn = article.querySelector('.btn-back-to-top');
     backBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      container.innerHTML = '<p class="placeholder-text">上のメニューから項目を選択してください。</p>';
+      container.innerHTML = '<p class="placeholder-text">上のメニューから項目を選択してください。なお「New」は14日以内の更新。</p>';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
@@ -168,7 +220,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const targetPage = urlParams.get('page');
 
   if (targetPage) {
-    // CSVから読み込んだリストの中から、該当するファイル名・基本名・日付を探して自動表示する
     const cacheBuster = `?t=${new Date().getTime()}`;
     try {
       const response = await fetch('md_menu.csv' + cacheBuster);
@@ -178,12 +229,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       for (const line of lines) {
         const cols = line.split(',').map(col => col.trim());
         const fileName = cols[0];
-        const fileDate = cols[1] || '';
 
         if (fileName === targetPage) {
           const baseName = fileName.substring(0, fileName.lastIndexOf('.'));
+          // 実ファイルの更新日時を取得
+          const fileDateObj = await fetchFileDate(fileName, cacheBuster);
+          const rawDateStr = fileDateObj ? fileDateObj.toISOString() : '';
+
           // 該当ページを自動読み込み
-          await loadAndDisplayMarkdown(fileName, baseName, fileDate, cacheBuster);
+          await loadAndDisplayMarkdown(fileName, baseName, rawDateStr, cacheBuster);
           
           // 自動的にその記事の位置までスクロール
           const container = document.getElementById('app');
