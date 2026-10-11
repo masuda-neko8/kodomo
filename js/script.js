@@ -1,7 +1,11 @@
-// 日付を yyyy/mm/dd 形式にフォーマットし、2週間以内なら赤字の「New」を付ける補助関数
-function formatDateWithNew(dateString) {
-  if (!dateString) return '';
-  const date = new Date(dateString);
+// 日付文字列（例: "2026/08/31 〔月〕 18:56"）から yyyy/mm/dd を抽出し、2週間以内なら赤字の「New」を付ける補助関数
+function formatDateWithNew(fileDateStr) {
+  if (!fileDateStr) return '';
+  
+  // スペースなどで分割して最初の日付部分（"2026/08/31"）を取り出す
+  const datePart = fileDateStr.split(' ')[0];
+  const date = new Date(datePart.replace(/\//g, '-'));
+  
   if (isNaN(date.getTime())) return '';
 
   const yyyy = date.getFullYear();
@@ -21,18 +25,18 @@ function formatDateWithNew(dateString) {
   return formattedDate;
 }
 
-// 各ファイルの最終更新日時（Last-Modified）を取得する補助関数
-async function fetchFileDate(fileName, cacheBuster) {
-  try {
-    const res = await fetch(`${fileName}${cacheBuster}`, { method: 'HEAD' });
-    const lastModified = res.headers.get('Last-Modified');
-    if (lastModified) {
-      return new Date(lastModified);
-    }
-  } catch (e) {
-    console.error(`${fileName} の日付取得に失敗しました`, e);
+// 記事詳細表示用のメタデータ日付を yyyy/mm/dd 形式にフォーマットする補助関数
+function formatMetaDate(fileDateStr) {
+  if (!fileDateStr) return '';
+  const datePart = fileDateStr.split(' ')[0];
+  const d = new Date(datePart.replace(/\//g, '-'));
+  if (!isNaN(d.getTime())) {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}/${mm}/${dd}`;
   }
-  return null;
+  return '';
 }
 
 // 自分自身のHTMLファイル名（またはパス）を動的に設定する関数
@@ -78,7 +82,8 @@ async function initApp() {
 
     for (const line of lines) {
       const cols = line.split(',').map(col => col.trim());
-      const fileName = cols[0]; // fileNameのみ取得（fileDateは読み込まない）
+      const fileName = cols[0];
+      const fileDate = cols[1] || ''; // CSVの2列目を取得
 
       if (fileName === 'ファイル名' || !fileName.endsWith('.md')) {
         continue;
@@ -87,9 +92,8 @@ async function initApp() {
       hasItems = true;
       const baseName = fileName.substring(0, fileName.lastIndexOf('.'));
 
-      // 実際のファイル自体の更新日時を取得
-      const fileDateObj = await fetchFileDate(fileName, cacheBuster);
-      const dateDisplayStr = formatDateWithNew(fileDateObj);
+      // CSVの日付を元にNew判定とフォーマットを行う
+      const dateDisplayStr = formatDateWithNew(fileDate);
 
       // メニュー項目の作成
       const tocItem = document.createElement('li');
@@ -102,8 +106,7 @@ async function initApp() {
       // リンクをクリックしたときの処理
       tocLink.addEventListener('click', async (e) => {
         e.preventDefault();
-        const rawDateStr = fileDateObj ? fileDateObj.toISOString() : '';
-        await loadAndDisplayMarkdown(fileName, baseName, rawDateStr, cacheBuster);
+        await loadAndDisplayMarkdown(fileName, baseName, fileDate, cacheBuster);
         
         // 追加：読み込んだ記事エリアの先頭までスムーズにスクロールする
         container.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -157,18 +160,8 @@ async function loadAndDisplayMarkdown(fileName, baseName, fileDate, cacheBuster)
       imageSrc = fallbackImgPath;
     }
 
-    // 記事内の日付表示のフォーマット（必要に応じてyyyy/mm/dd形式へ）
-    let formattedMetaDate = '';
-    if (fileDate) {
-      const d = new Date(fileDate);
-      if (!isNaN(d.getTime())) {
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const dd = String(d.getDate()).padStart(2, '0');
-        formattedMetaDate = `${yyyy}/${mm}/${dd}`;
-      }
-    }
-
+    // 記事ヘッダー用のメタデータ日付を yyyy/mm/dd 形式に整形
+    const formattedMetaDate = formatMetaDate(fileDate);
     const metaDateHtml = formattedMetaDate ? `<span class="md-meta-date">更新日時: ${formattedMetaDate}</span>` : '';
 
     const article = document.createElement('article');
@@ -229,15 +222,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       for (const line of lines) {
         const cols = line.split(',').map(col => col.trim());
         const fileName = cols[0];
+        const fileDate = cols[1] || '';
 
         if (fileName === targetPage) {
           const baseName = fileName.substring(0, fileName.lastIndexOf('.'));
-          // 実ファイルの更新日時を取得
-          const fileDateObj = await fetchFileDate(fileName, cacheBuster);
-          const rawDateStr = fileDateObj ? fileDateObj.toISOString() : '';
-
           // 該当ページを自動読み込み
-          await loadAndDisplayMarkdown(fileName, baseName, rawDateStr, cacheBuster);
+          await loadAndDisplayMarkdown(fileName, baseName, fileDate, cacheBuster);
           
           // 自動的にその記事の位置までスクロール
           const container = document.getElementById('app');
