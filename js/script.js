@@ -4,7 +4,8 @@ function formatDateWithNew(fileDateStr) {
   
   // スペースなどで分割して最初の日付部分（"2026/08/31"）を取り出す
   const datePart = fileDateStr.split(' ')[0];
-  const date = new Date(datePart.replace(/\//g, '-'));
+  // const date = new Date(datePart.replace(/\//g, '-'));
+  const date = new Date(datePart);
   
   if (isNaN(date.getTime())) return '';
 
